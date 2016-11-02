@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class SoccerDatabase implements SoccerDB {
 
-    Hashtable<String,SoccerPlayer> table = new Hashtable<>();
+    Hashtable table = new Hashtable();
     /**
      * add a player
      *
@@ -32,12 +32,10 @@ public class SoccerDatabase implements SoccerDB {
             return false;
         }
         else {
-            table.put(playerKey,
-                    new SoccerPlayer(firstName,lastName,uniformNumber,teamName));
+            SoccerPlayer player = new SoccerPlayer(firstName,lastName,uniformNumber,teamName);
+            table.put(playerKey,player);
             return true;
         }
-
-
 	}
 
     /**
@@ -57,7 +55,14 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
 	public SoccerPlayer getPlayer(String firstName, String lastName) {
-        return null;
+        String playerKey = (firstName+" ## "+lastName);
+        if (table.contains(playerKey)) {
+            SoccerPlayer player = (SoccerPlayer) table.get(playerKey);
+            return player;
+        }
+        else {
+            return null;
+        }
     }
 
     /**
