@@ -5,6 +5,7 @@ import android.util.Log;
 import edu.up.cs371.soccer_application.soccerPlayer.SoccerPlayer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
@@ -16,8 +17,9 @@ import java.util.*;
  * @version *** put date of completion here ***
  *
  */
-public class SoccerDatabase implements SoccerDB {
-
+public class SoccerDatabase implements SoccerDB
+{
+    Hashtable<String,SoccerPlayer> table = new Hashtable<String ,SoccerPlayer>();
     /**
      * add a player
      *
@@ -25,8 +27,19 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
 	public boolean addPlayer(String firstName, String lastName,
-			int uniformNumber, String teamName) {
-        return false;
+			int uniformNumber, String teamName)
+    {
+        String name = firstName+"##"+lastName;
+
+        if(table.get(name) != null)
+        {
+            return false;
+        }
+        else
+        {
+            table.put(name,new SoccerPlayer(firstName,lastName,uniformNumber,teamName));
+            return true;
+        }
 	}
 
     /**
@@ -35,8 +48,21 @@ public class SoccerDatabase implements SoccerDB {
      * @see SoccerDB#removePlayer(String, String)
      */
     @Override
-    public boolean removePlayer(String firstName, String lastName) {
-        return false;
+    public boolean removePlayer(String firstName, String lastName)
+    {
+        String name = firstName+"##"+lastName;
+
+        SoccerPlayer player = (SoccerPlayer)table.get(name);
+        if(player != null)
+        {
+            table.remove(name);
+            return true;
+
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -45,8 +71,19 @@ public class SoccerDatabase implements SoccerDB {
      * @see SoccerDB#getPlayer(String, String)
      */
     @Override
-	public SoccerPlayer getPlayer(String firstName, String lastName) {
-        return null;
+	public SoccerPlayer getPlayer(String firstName, String lastName)
+    {
+      String name = firstName+"##"+lastName;
+
+            SoccerPlayer player = (SoccerPlayer) table.get(name);
+            if(player != null)
+            {
+                return player;
+            }
+            else
+            {
+                return null;
+            }
     }
 
     /**
@@ -55,8 +92,20 @@ public class SoccerDatabase implements SoccerDB {
      * @see SoccerDB#bumpGoals(String, String)
      */
     @Override
-    public boolean bumpGoals(String firstName, String lastName) {
-        return false;
+    public boolean bumpGoals(String firstName, String lastName)
+    {
+        String name = firstName+"##"+lastName;
+
+        SoccerPlayer player = (SoccerPlayer) table.get(name);
+        if(player != null)
+        {
+            player.bumpGoals();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -126,9 +175,30 @@ public class SoccerDatabase implements SoccerDB {
      */
     @Override
     // report number of players on a given team (or all players, if null)
-	public int numPlayers(String teamName) {
-        return -1;
-	}
+	public int numPlayers(String teamName)
+    {
+        int counter = 0;
+        Iterator it = table.entrySet().iterator();
+        String word;
+        SoccerPlayer player;
+        if(teamName == null)
+        {
+            return table.size();
+        }
+        else
+        {
+            for(int i = 0; i < table.size(); i++)
+            {
+                Map.Entry pair = (Map.Entry)it.next();
+                player = (SoccerPlayer) table.get(pair.getKey());
+                if(player.getTeamName().equals(teamName))
+                {
+                    counter++;
+                }
+            }
+            return counter;
+        }
+    }
 
     /**
      * gives the nth player on a the given team
@@ -137,7 +207,42 @@ public class SoccerDatabase implements SoccerDB {
      */
 	// get the nTH player
 	@Override
-    public SoccerPlayer playerNum(int idx, String teamName) {
+    public SoccerPlayer playerNum(int idx, String teamName)
+    {
+        Set set = table.keySet();
+        String[] playerNames = table.keySet().toArray(new String[table.size()]);
+        int counter = 0;
+        Iterator it = table.entrySet().iterator();
+        SoccerPlayer player;
+//        if(teamName == null)
+//        {
+//            while(it.hasNext())
+//            {
+//                Map.Entry pair = (Map.Entry)it.next();
+//                player = (SoccerPlayer) table.get(pair.getKey());
+//                if(counter == idx)
+//                {
+//                    return player;
+//                }
+//                counter++;
+//            }
+//        }
+//        else
+//        {
+            for(int i = 0; i < set.size(); i++)
+            {
+                player = (SoccerPlayer) table.get(playerNames[i]);
+                if(teamName == null || player.getTeamName().equals(teamName))
+                {
+                    if(counter == idx)
+                    {
+                        return player;
+                    }
+                    counter++;
+
+                }
+            }
+       // }
         return null;
     }
 
@@ -159,9 +264,36 @@ public class SoccerDatabase implements SoccerDB {
      */
 	// write data to file
     @Override
-	public boolean writeData(File file) {
-        return false;
+	public boolean writeData(File file)
+    {
+        SoccerPlayer player;
+        String[] playerNames = table.keySet().toArray(new String[table.size()]);
+        try
+        {
+            PrintWriter writer = new PrintWriter(file);
+            for(int i = 0; i < table.size(); i++) {
+                player = table.get(playerNames[i]);
+                writer.println(logString(player.getFirstName()));
+                writer.println(logString(player.getLastName()));
+                writer.println(logString(player.getTeamName()));
+                writer.println(logString("" + player.getUniform()));
+                writer.println(logString(""+player.getGoals()));
+                writer.println(logString("" + player.getShots()));
+                writer.println(logString("" + player.getAssists()));
+                writer.println(logString("" + player.getSaves()));
+                writer.println(logString("" + player.getFouls()));
+                writer.println(logString("" + player.getYellowCards()));
+                writer.println(logString("" + player.getRedCards()));
+                writer.close();
+            }
+            return true;
+        }
+        catch (FileNotFoundException e)
+        {
+            return false;
+        }
 	}
+
 
     /**
      * helper method that logcat-logs a string, and then returns the string.
